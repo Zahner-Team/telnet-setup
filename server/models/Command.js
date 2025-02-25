@@ -2,7 +2,8 @@
 import { db } from '../helpers/firebase.js';
 import { collection, doc, setDoc } from 'firebase/firestore';
 
-const TotalStationCommands = {
+// Export the commands and responses
+export const TotalStationCommands = {
   START_STREAM: '%R8Q,4:\r\n',
   STOP_STREAM: '%R8Q,5:\r\n',
   turnTelescope: (x, y, z) => `%R8Q,7:1,${x},${y},${z}\r\n`,
@@ -10,7 +11,7 @@ const TotalStationCommands = {
   SEARCH: '%R8Q,6:1\r\n',
 };
 
-const TotalStationResponses = {
+export const TotalStationResponses = {
   0: 'GRC_OK',
   41: 'GRC_POSITIONING_FAILED',
   26: 'GRC_DIST_ERR',
@@ -34,7 +35,6 @@ class Command {
   }
 
   async invoke() {
-    // Cleanup old listeners
     this.streamer.removeAllListeners('streaming-response');
     this.streamer.removeAllListeners('point');
     this.streamer.removeAllListeners('end');
@@ -45,7 +45,6 @@ class Command {
     const { x, y, z } = this.data.position;
     console.log('Position:', x, y, z);
 
-    // Start the sequence of attempts
     return this.#executeSequence(y, x, z);
   }
 
@@ -97,11 +96,9 @@ class Command {
           console.log('Response error:', TotalStationResponses[responseCode] || 'Unknown Error');
 
           if (responseCode === 31) {
-            // Reflector not found, handle attempts
             return handleReflectorNotFound();
           }
 
-          // Other critical errors that we don't retry internally
           if ([28, 41, 26, 50].includes(responseCode)) {
             this.streamer.emit('end');
             return reject(new Error(TotalStationResponses[responseCode] || 'Unknown Error'));
@@ -110,7 +107,6 @@ class Command {
           if (responseCode === 3107) {
             console.log('Previous command still running (Code 3107), waiting 0.5 seconds');
             this.clearTimeoutHandle();
-            // Resend the same command after a short delay, no attempt increment
             setTimeout(() => {
               sendNextCommand(currentCommand);
             }, 500);
@@ -118,10 +114,8 @@ class Command {
           }
         }
 
-        // If no error or after handling non-fatal responses, move to the next command
         const nextCommand = localQueue.shift();
         if (!nextCommand) {
-          // No more commands: wait for 'point' or 'end' event
           return;
         }
         sendNextCommand(nextCommand);
@@ -137,7 +131,7 @@ class Command {
       const onPoint = async (point) => {
         clearTimeout(this.timeoutHandle);
         this.#cleanupListeners(onStreamingResponse, onPoint, onEnd);
-      
+
         if (point === 'connection closed: too many clients') {
           console.log('Reset: connection closed due to too many clients.');
           setTimeout(() => {
@@ -146,25 +140,18 @@ class Command {
           }, 5000);
           return;
         }
-      
+
         await this.#markAsInvoked();
         console.log(`ANCHOR: ${this.data.anchor}\nPOINT: ${point}`);
-        
-        // Here we let the session determine the anchor if none is passed
-        // If you want to always use the current default anchor, omit `this.data.anchor`
-        // and just call `await this.session.addPoint(point)`
         await this.session.addPoint(point, this.data.anchor); 
-      
         console.log('----Command Complete----');
         resolve();
       };
-      
 
       this.streamer.on('streaming-response', onStreamingResponse);
       this.streamer.on('end', onEnd);
       this.streamer.on('point', onPoint);
 
-      // Start with the first command
       const firstCommand = localQueue.shift();
       if (!firstCommand) {
         return reject(new Error('No commands to execute.'));

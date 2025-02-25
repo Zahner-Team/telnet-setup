@@ -11,7 +11,7 @@ import logger from '../helpers/loggers.js'
 
 const App = () => {
   const [buttonStatus, setButtonStatus] = useState(false)
-  const [sessionIDValue, setSessionIDValue] = useState('')
+  const [sessionIDValue, setSessionIDValue] = useState("AAM-ShopLink")
   const [stationIDValue, setStationIDValue] = useState('')
   const [stationName, setStationName] = useState('')
   const [data, setData] = useState(null)

@@ -8,7 +8,7 @@ const Output = ({ data }) => {
       <Typography variant="h6" gutterBottom>
         Output:
       </Typography>
-      <Paper elevation={3} sx={{ p: 2, minHeight: '200px', maxHeight: '400px', overflowY: 'auto' }}>
+      <Paper elevation={3} sx={{ p: 2, minHeight: '50px', maxHeight: '400px', overflowY: 'auto' }}>
         <Typography variant="body1">
           {data ? data : 'No data received yet.'}
         </Typography>

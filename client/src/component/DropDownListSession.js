@@ -8,7 +8,7 @@ import Select from '@mui/material/Select';
 import { ClientSession } from '../models/ClientSession.js';
 
 const DropDownListSession = ({ setSessionIDValue, setStationIDValue, setStationName }) => {
-  const [sessionID, setSessionID] = useState('');
+  // const [sessionID, setSessionID] = useState('');
   const [station, setStation] = useState('');
   const [connectionType, setConnectionType] = useState(0); // 0: WiFi, 1: USB
   const [documents, setDocuments] = useState([]);
@@ -25,12 +25,14 @@ const DropDownListSession = ({ setSessionIDValue, setStationIDValue, setStationN
     '02:24:00:00:00:00': 'Princess Peach'
   };
 
-  const handleChangeSession = (event) => {
-    const selectedSession = event.target.value;
-    console.log('Selected Session:', selectedSession);
-    setSessionID(event.target.value);
-    setSessionIDValue(event.target.value);
-  };
+  // removed for updating to shapediver
+  // const handleChangeSession = (event) => {
+  //   const selectedSession = event.target.value;
+  //   console.log('Selected Session:', selectedSession);
+  //   setSessionID(event.target.value);
+  //   setSessionIDValue(event.target.value);
+  // };
+  // setSessionIDValue("AAM-ShopLink"); //moved to below
 
   const handleChangeStation = (event) => {
     const selectedStation = event.target.value;
@@ -38,6 +40,7 @@ const DropDownListSession = ({ setSessionIDValue, setStationIDValue, setStationN
     setStation(selectedStation);
     setStationIDValue(selectedStation);
     setStationName(lookupValue[selectedStation]);
+    setSessionIDValue("AAM-ShopLink"); // added to not rerender error
   };
 
   const handleChangeConnectionType = (event) => {
@@ -108,7 +111,7 @@ const DropDownListSession = ({ setSessionIDValue, setStationIDValue, setStationN
         </Select>
       </FormControl>
 
-      <FormControl fullWidth sx={{ mb: 2 }}>
+      {/* <FormControl fullWidth sx={{ mb: 2 }}>
         <InputLabel id="select-session-label">Session ID</InputLabel>
         <Select
           labelId="select-session-label"
@@ -119,7 +122,7 @@ const DropDownListSession = ({ setSessionIDValue, setStationIDValue, setStationN
         >
           {sessionItems}
         </Select>
-      </FormControl>
+      </FormControl> */}
     </Box>
   );
 };

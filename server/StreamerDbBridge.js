@@ -1,15 +1,15 @@
 // server/StreamerDbBridge.js
 import { CommandQueue } from './helpers/CommandQueue.js';
-// import { Command } from './models/Command.js';
-
+import { MultiPointCommand } from './models/MultiPointCommand.js';
+import { Command } from './models/Command.js';
 
 class StreamerDbBridge {
-  constructor(streamer, session, logger) { // Removed 'io' from constructor
+  constructor(streamer, session, logger) {
     this.streamer = streamer;
     this.session = session;
     this.commandQueue = new CommandQueue(this.streamer);
     this.logger = logger;
-    this.isStarting = false; // Guard flag to prevent recursive starts
+    this.isStarting = false; // Guard flag to prevent recursive starts.
   }
 
   /**
@@ -20,38 +20,38 @@ class StreamerDbBridge {
       this.logger.warn('StreamerDbBridge is already starting. Skipping redundant start.');
       return;
     }
-
     this.isStarting = true;
-
     try {
       await this.streamer.connect();
       await this.session.init();
-      // Clear any pending old commands before starting
+      // Clear any pending old commands.
       await this.session.clearPendingCommands();
-      // start the stream
-      this.streamer.send('%R8Q,5:\r\n') // stop stream
-      this.streamer.send('%R8Q,4:\r\n')// start stream
+      // Start the stream.
+      this.streamer.send('%R8Q,5:\r\n'); // Stop stream.
+      this.streamer.send('%R8Q,4:\r\n'); // Start stream.
 
-      const { Command } = await import('./models/Command.js');
-
-      // Listen for new commands from the session
+      // Listen for new commands from Firestore.
       this.session.onCommandCreated((data) => {
-        this.logger.info(`Command created for anchor: ${data.anchor}`);
-        
-        const command = new Command(this.streamer, this.session, data);
+        this.logger.info(`Command created with id: ${data.id}`);
+        let command;
+        if (data.ToMeasure) {
+          // Use the multi‑point command if ToMeasure exists.
+          command = new MultiPointCommand(this.streamer, data);
+        } else {
+          // Otherwise, use the legacy single‑point Command.
+          command = new Command(this.streamer, this.session, data);
+        }
         this.commandQueue.addCommand(command);
-        // this.logger.info('Command added to queue.', command);
       });
 
-      // Listen for data points from the streamer
+      // Listen for data points from the streamer.
       this.streamer.on('point', (point) => {
         if (this.commandQueue.isInProgress) return;
         this.logger.info(`Received point: "${point}"`);
-        // this.logger.data(point);
         this.session.addPoint(point);
       });
 
-      // Handle streamer reset events
+      // Handle streamer reset events.
       this.streamer.on('reset', () => {
         this.logger.warn('Resetting Streamer...');
         setTimeout(() => {
@@ -60,21 +60,23 @@ class StreamerDbBridge {
             this.streamer.socket.end();
             this.streamer.socket.destroy();
           }
-          this.start(); // This is safe now due to the guard
+          this.start(); // Restart the bridge.
           this.logger.info('Streamer restarted.');
         }, 2000);
       });
 
-      // Handle socket timeouts
-      this.streamer.socket.once('timeout', () => {
-        this.logger.error('Socket timeout occurred. Attempting to reconnect...');
-        this.commandQueue.clearCommandQueue();
-        if (this.streamer.socket) {
-          this.streamer.socket.end();
-          this.streamer.socket.destroy();
-        }
-        this.start();
-      });
+      // Only set up the timeout handler if the streamer has a socket.
+      if (this.streamer.socket && typeof this.streamer.socket.once === 'function') {
+        this.streamer.socket.once('timeout', () => {
+          this.logger.error('Socket timeout occurred. Attempting to reconnect...');
+          this.commandQueue.clearCommandQueue();
+          if (this.streamer.socket) {
+            this.streamer.socket.end();
+            this.streamer.socket.destroy();
+          }
+          this.start();
+        });
+      }
     } catch (error) {
       this.logger.error(`Error in StreamerDbBridge start: ${error.message}`);
     } finally {

@@ -1,44 +1,38 @@
 // server/models/Session.js
 import { db, serverTimestamp } from '../helpers/firebase.js';
-import { zeaDebug } from '../helpers/zeaDebug.js';
-import { collection, doc, setDoc, getDoc, onSnapshot, query, where, orderBy, getDocs } from 'firebase/firestore';
+import { collection, doc, setDoc, onSnapshot, query, where, orderBy, getDocs } from 'firebase/firestore';
 import EventEmitter from 'events';
-import { logger } from '../helpers/logger.js'; // Import the initialized logger
+import { logger } from '../helpers/logger.js';
 
 class Session extends EventEmitter {
-  #latestSelectedAnchor;
-
   constructor(id) {
     super();
     if (!id) {
       throw new Error('Missing `id` argument.');
     }
     this.id = id;
+    // Instead of obtaining the latest anchor from Firestore, we hard-code it.
+    this.defaultAnchor = 'DefaultAnchor';
     this.unsub = null;
   }
 
   /**
-   * Initializes the session by observing Firestore documents.
+   * Initialize the session.
+   * Since we're no longer using a Firestore sessions doc, we simply set a default anchor.
    */
   async init() {
-    await this.#observeSession();
+    // You could, if desired, write a new session doc to Firestore here.
+    // For now, we just log and use a hard-coded default anchor.
+    logger.info(`Using hard-coded session ${this.id} with default anchor: ${this.defaultAnchor}`);
   }
 
   /**
-   * Adds a point to the session and Firestore.
-   * @param {string} point - The point data.
-   * @param {string} [anchor] - The anchor associated with the point.
+   * Adds a point to the session and optionally writes it to Firestore.
+   * If no anchor is provided, the defaultAnchor is used.
    */
   async addPoint(point, anchor) {
-    // If no anchor passed in, fallback to the session's current default anchor
-    const theAnchor = anchor || this.#latestSelectedAnchor;
-  
-    if (!theAnchor) {
-      logger.warn('Missing `anchor` and `latestSelectedAnchor`. Did you remember to #init the session?');
-      return;
-    }
-  
-    logger.info(`Anchor selected: ${theAnchor}`);
+    const theAnchor = anchor || this.defaultAnchor;
+    logger.info(`Adding point "${point}" for anchor: ${theAnchor}`);
     const docRef = doc(collection(db, 'points'));
     const data = {
       id: docRef.id,
@@ -55,11 +49,11 @@ class Session extends EventEmitter {
       logger.error('Error adding point to Firestore:', error);
     }
   }
-  
 
   /**
    * Sets up a listener for new commands in Firestore.
-   * @param {Function} callback - The function to call when a new command is created.
+   * This query still filters by sessionId so that you only process commands
+   * that are meant for this hard-coded session.
    */
   onCommandCreated(callback) {
     const q = query(
@@ -68,23 +62,27 @@ class Session extends EventEmitter {
       where('isInvoked', '==', false),
       orderBy('createdAt')
     );
-
+  
     const unsub = onSnapshot(q, (snapshot) => {
+      logger.info(`Command snapshot received for session ${this.id}. Change count: ${snapshot.docChanges().length}`);
       snapshot.docChanges().forEach((change) => {
+        logger.info(`Change detected: ${change.type}`, change.doc.data());
         if (change.type === 'added') {
-          callback(change.doc.data());
+          // Attach the document ID
+          const data = change.doc.data();
+          data.id = change.doc.id;
+          callback(data);
         }
       });
     }, (error) => {
       logger.error(`Error listening to commands for session ${this.id}:`, error);
     });
-
+  
     this.unsub = unsub;
   }
 
   /**
-   * Clears any pending (non-invoked) commands from Firestore by marking them as invoked.
-   * This can be called once when the connection is established to prevent old commands from running again.
+   * Clears any pending (non-invoked) commands from Firestore.
    */
   async clearPendingCommands() {
     try {
@@ -103,40 +101,6 @@ class Session extends EventEmitter {
     }
   }
 
-  /**
-   * Observes the session document in Firestore to keep track of the latest selected anchor.
-   */
-  async #observeSession() {
-    logger.info(`Observing session: ${this.id}`);
-
-    const docRef = doc(collection(db, 'sessions'), this.id);
-    const docSnap = await getDoc(docRef);
-
-    if (!docSnap.exists()) {
-      throw new Error(
-        `Session not found. ID: "${this.id}". Session must be created using the web app.`
-      );
-    }
-
-    zeaDebug("Found existing session with id '%s'", this.id);
-    logger.info(`Found existing session with id '${this.id}'`);
-
-    if (this.unsub) {
-      this.unsub();
-    }
-
-    this.unsub = onSnapshot(docRef, (snapshot) => {
-      this.#latestSelectedAnchor = snapshot.data().latestSelectedAnchor || null;
-      console.log("Current anchor selected:", this.#latestSelectedAnchor);
-      logger.info(`Current anchor selected: '${this.#latestSelectedAnchor}'`);
-    }, (error) => {
-      logger.error(`Error observing session ${this.id}:`, error);
-    });
-  }
-
-  /**
-   * Cleans up listeners when the session is no longer needed.
-   */
   cleanup() {
     if (this.unsub) {
       this.unsub();
