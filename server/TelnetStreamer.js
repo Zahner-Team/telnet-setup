@@ -22,7 +22,7 @@ async function getIp(stationMacs) {
 
   while (notFound && attempts < maxAttempts) {
     const devices = await find();
-    // console.log('Devices found:', devices); // Optional
+    console.log('Devices found:', devices); // Optional
     // logger.info(`Devices found: ${JSON.stringify(devices)}`); // Log the devices found
     const matchedDevices = devices.filter(device => stationMacs.includes(device.mac));
     if (matchedDevices.length > 0) {

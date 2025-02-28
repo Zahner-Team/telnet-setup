@@ -56,7 +56,7 @@ export class MultiPointCommand {
         TotalStationCommands.STOP_STREAM,
         TotalStationCommands.START_STREAM,
         TotalStationCommands.turnTelescope(coords.x, coords.y, coords.z),
-        TotalStationCommands.SEARCH,
+        // TotalStationCommands.SEARCH,
         TotalStationCommands.SAMPLE_DIST,
       ];
       let currentCommand = null;
@@ -166,26 +166,28 @@ export class MultiPointCommand {
   }
 
   async #writeMeasuredData() {
-    // Generate a new document reference with an auto‑generated ID.
-    const panelPointsRef = doc(collection(db, 'panel-points'));
-    const generatedId = panelPointsRef.id;
+    // Use the panel ID (or a default) as the document ID.
+    const panelId = this.data.panel || 'Unknown-Panel';
+    const panelPointsRef = doc(collection(db, 'panel-points'), panelId);
     const payload = {
-      id: generatedId, // Add the generated ID as a property.
+      id: panelId, // Use the panel id as the document id property.
       measured: this.measuredResults,
-      panelId: this.data.panel || 'Unknown-Panel',
+      panelId: panelId,
       sessionId: this.data.sessionId || 'Unknown-Session',
       updatedAt: new Date(),
     };
     try {
-      await setDoc(panelPointsRef, payload);
+      // Use merge: true so that if the document already exists, it gets updated.
+      await setDoc(panelPointsRef, payload, { merge: true });
       logger.info(
-        `Measured data written to panel-points with generated id ${generatedId}: ${JSON.stringify(payload)}`
+        `Measured data updated for panel-points/${panelId}: ${JSON.stringify(payload)}`
       );
     } catch (err) {
       logger.error('Error writing measured data:', err);
       throw err;
     }
   }
+  
 
   async #markAsInvoked() {
     try {

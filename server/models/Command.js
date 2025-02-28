@@ -56,7 +56,7 @@ class Command {
       TotalStationCommands.STOP_STREAM,
       TotalStationCommands.START_STREAM,
       TotalStationCommands.turnTelescope(x, y, z),
-      TotalStationCommands.SEARCH,
+      // TotalStationCommands.SEARCH,
       TotalStationCommands.SAMPLE_DIST,
     ];
 
