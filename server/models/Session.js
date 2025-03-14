@@ -72,7 +72,7 @@ class Session {
   }
 
   async #observeSession() {
-    console.log("db sessions", this.id, '\n', db);
+     //console.log("db sessions", this.id, '\n', db);
 
     const docRef = doc(collection(db, 'sessions'), this.id);
     const docSnap = await getDoc(docRef);
