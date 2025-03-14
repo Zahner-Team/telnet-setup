@@ -1,6 +1,6 @@
 // server/StreamerEntry.js
 import { TelnetStreamer } from './telnetStreamer.js';
-import { MockStreamer } from './mockStreamer.js';
+import { MockStreamer } from './MockStreamer.js';
 import { StreamerDbBridge } from './StreamerDbBridge.js';
 import { Session } from './models/Session.js';
 import { logger } from './helpers/logger.js';

@@ -49,20 +49,24 @@ export class MultiPointCommand {
     }
   }
 
+  // In server/models/MultiPointCommand.js, within the MultiPointCommand class
   // Processes a single measurement point.
   #measurePoint(pointName, coords) {
     return new Promise((resolve, reject) => {
+      // Build the command queue.
+      // (If you decide to disable SEARCH, it is omitted here.)
       const localQueue = [
         TotalStationCommands.STOP_STREAM,
         TotalStationCommands.START_STREAM,
-        TotalStationCommands.turnTelescope(coords.x, coords.y, coords.z),
-        // TotalStationCommands.SEARCH,
+        // Flip X->east, Y->North as required.
+        TotalStationCommands.turnTelescope(coords.y, coords.x, coords.z),
+        // TotalStationCommands.SEARCH, // (disabled if desired)
         TotalStationCommands.SAMPLE_DIST,
       ];
       let currentCommand = null;
       let timeoutHandle = null;
 
-      // Local timeout helpers.
+      // Helper to reset the timeout.
       const resetTimeout = (callback) => {
         clearTimeout(timeoutHandle);
         timeoutHandle = setTimeout(callback, this.globalTimeout);
@@ -78,27 +82,29 @@ export class MultiPointCommand {
         const codeStr = response.substring(response.lastIndexOf(':') + 1).trim();
         const code = parseInt(codeStr, 10);
         if (code !== 0) {
-          logger.warn(
-            `Response error for point ${pointName}: code ${code} => ${
-              TotalStationResponses[code] || 'Unknown error'
-            }`
-          );
-          // Reject immediately for critical errors.
-          if ([28, 31, 41, 26, 50].includes(code)) {
+          if (code === 31) {
+            logger.warn(
+              `Prism not found for point ${pointName}: code ${code} => ${TotalStationResponses[code] || 'Unknown error'}`
+            );
+            // Skip this point (do not assign a measurement value) and resolve.
+            cleanupAndResolve();
+            return;
+          }
+          if ([28, 41, 26, 50].includes(code)) {
+            logger.warn(
+              `Response error for point ${pointName}: code ${code} => ${TotalStationResponses[code] || 'Unknown error'}`
+            );
             cleanupAndReject(new Error(TotalStationResponses[code] || 'Measurement error'));
             return;
           }
-          // If a previous command is still running, retry the current command.
           if (code === 3107) {
-            logger.info(`Code 3107 received for point ${pointName}; retrying current command.`);
-            resetTimeout(() => {
-              cleanupAndReject(new Error('Timed out after retrying command.'));
-            });
-            sendNextCommand(currentCommand);
+            // Instead of resending the command immediately, log and wait.
+            logger.info(`Code 3107 received for point ${pointName}; waiting for command to complete.`);
+            // Do not send any command here; let the system wait for the final finish event.
             return;
           }
         }
-        // Send the next command in the queue if available.
+        // If the code is 0 (or another acceptable code), move to the next command.
         const nextCmd = localQueue.shift();
         if (nextCmd) {
           sendNextCommand(nextCmd);
@@ -116,11 +122,12 @@ export class MultiPointCommand {
           cleanupAndReject(new Error('Invalid measurement format'));
           return;
         }
-        // Extract x, y, and z from the string.
-        const x = parseFloat(parts[1]);
-        const y = parseFloat(parts[2]);
-        const z = parseFloat(parts[3]);
-        this.measuredResults[pointName] = { x, y, z };
+        // Extract x, y, and z.
+        // Note: Adjusted as per your current mapping (swapping x and y if needed).
+        const yVal = parseFloat(parts[1]);
+        const xVal = parseFloat(parts[2]);
+        const zVal = parseFloat(parts[3]);
+        this.measuredResults[pointName] = { x: xVal, y: yVal, z: zVal };
         cleanupAndResolve();
       };
 
@@ -164,6 +171,8 @@ export class MultiPointCommand {
       sendNextCommand(firstCmd);
     });
   }
+
+
 
   async #writeMeasuredData() {
     // Use the panel ID (or a default) as the document ID.
