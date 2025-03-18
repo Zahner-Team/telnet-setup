@@ -58,6 +58,7 @@ class ClientSession {
     //   appId: "1:473701857342:web:73573aa5b8fc7db50b396f",
     //   measurementId: "G-71DM2KZP94"
     // };
+    
     const firebaseConfig = {
       apiKey: "AIzaSyDWSkRhOgU5YniISzP6mZFv6hW2da2UgQ8",
       authDomain: "zahner-shoplink.firebaseapp.com",
