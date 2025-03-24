@@ -20,7 +20,9 @@
     "electron-builder": "^25.1.8",
     "nodemon": "^2.0.22",
     "prettier": "^2.8.8",
-    "wait-on": "^8.0.1"
+    "wait-on": "^8.0.1",
+    "webpack": "^5.98.0",
+    "webpack-dev-server": "^5.2.0"
   },
   "scripts": {
     "dev": "cross-env NODE_ENV=development concurrently \"npm run start-server\" \"npm run start-react\" \"npm run electron-wait\"",

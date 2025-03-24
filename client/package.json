@@ -60,6 +60,8 @@
   },
   "devDependencies": {
     "cross-env": "^7.0.3",
-    "electron-is-dev": "^3.0.1"
+    "electron-is-dev": "^3.0.1",
+    "webpack": "^5.98.0",
+    "webpack-dev-server": "^5.2.0"
   }
 }
