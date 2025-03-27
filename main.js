@@ -26,7 +26,7 @@ function createWindow() {
 
   // Load the React frontend
   if (isDev) {
-    mainWindow.loadURL('http://localhost:3006')
+    mainWindow.loadURL('http://127.0.0.1:3006')
     mainWindow.webContents.openDevTools()
   } else {
     mainWindow.loadFile('client/build/index.html')
