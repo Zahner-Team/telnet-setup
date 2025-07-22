@@ -2,11 +2,12 @@
   "dependencies": {
     "cors": "^2.8.5",
     "express": "^4.17.3",
-    "firebase": "^10.13.2",
+    "firebase": "^10.14.1",
     "firebase-admin": "^12.5.0",
     "local-devices": "^3.0.0",
     "rxjs": "^7.3.0",
-    "telnet-client": "^1.4.9"
+    "telnet-client": "^1.4.9",
+    "yarn": "^1.22.22"
   },
   "devDependencies": {
     "debug": "^4.3.2",
