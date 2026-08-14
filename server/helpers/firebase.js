@@ -3,16 +3,25 @@ import { initializeApp } from 'firebase/app';
 import { getFirestore, serverTimestamp } from 'firebase/firestore';
 
 // Firebase configuration object
-const firebaseConfig = {
-  apiKey: "AIzaSyCIoL9RlD15JzJo1XDPBzTm1xR6StBUaxI",
-  authDomain: "csc-surveylink.firebaseapp.com",
-  projectId: "csc-surveylink",
-  storageBucket: "csc-surveylink.appspot.com",
-  messagingSenderId: "473701857342",
-  appId: "1:473701857342:web:73573aa5b8fc7db50b396f",
-  measurementId: "G-71DM2KZP94"
-};
+// const firebaseConfig = {
+//   apiKey: "AIzaSyCIoL9RlD15JzJo1XDPBzTm1xR6StBUaxI",
+//   authDomain: "csc-surveylink.firebaseapp.com",
+//   projectId: "csc-surveylink",
+//   storageBucket: "csc-surveylink.appspot.com",
+//   messagingSenderId: "473701857342",
+//   appId: "1:473701857342:web:73573aa5b8fc7db50b396f",
+//   measurementId: "G-71DM2KZP94"
+// };
 
+// Base template firebase config
+const firebaseConfig = {
+  apiKey: "AIzaSyB9vUEPeFPFT-eBs7b5fbFDItvhLdvnSkE",
+  authDomain: "surveylink-base-template.firebaseapp.com",
+  projectId: "surveylink-base-template",
+  storageBucket: "surveylink-base-template.firebasestorage.app",
+  messagingSenderId: "430020659734",
+  appId: "1:430020659734:web:990ed653f0456a1ccc4337"
+};
 // const firebaseConfig = {
 //   apiKey: "AIzaSyCwm0Nex3W_jTBFZWAofXH7r4mTa3bdosw",
 //   authDomain: "zahner-production-8e2af.firebaseapp.com",
