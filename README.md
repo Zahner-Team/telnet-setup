@@ -1,5 +1,27 @@
 ##  New project: if you made a new project in firebase, you need to add indexs in google console too. There is a screenshot here in this repo (image.png) you can see what indexes are needed to add in google.console
 
+# Windows Machine setup:
+	<!-- 1) Install
+		a. Vscode
+		b. NPM
+		c. Yarn
+			i. If error with script run terminal in command
+			ii. Set-ExecutionPolicy RemoteSigned -Scope LocalMachine 
+		d. Git
+		e. Github desktop
+	2) Clone: https://github.com/Zahner-Team/telnet-setup 
+		a. Ensure you are on branch linux
+	3) 3 install
+		a. In root run yarn install
+		b. In client run yarn install
+		c. Install Leica driver
+		d. Run
+	4) Install firebase tools "npm install -g firebase-tools"
+		a. May need to run yarn add firebase
+		b. Install "npm install firebase@latest" in the exact root that bat file exist
+		
+	5) Setup RNDIS (virtual etherlink l
+Install "setup_leica_USB_64bit.exe" -->
 
 
 ## Installing deps
