@@ -1,3 +1,7 @@
+##  New project: if you made a new project in firebase, you need to add indexs in google console too. There is a screenshot here in this repo (image.png) you can see what indexes are needed to add in google.console
+
+
+
 ## Installing deps
 
 ```bash
